@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera Capture</title>
+</head>
+<body>
+  <h1>Сделать фото</h1>
+  <video id="video" autoplay></video>
+  <button id="capture">Сделать фото</button>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <img id="photo" alt="Ваше фото">
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const photo = document.getElementById('photo');
+    const captureButton = document.getElementById('capture');
+    const context = canvas.getContext('2d');
+
+    // Запрашиваем доступ к камере
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+      })
+      .catch((err) => {
+        console.error('Ошибка доступа к камере:', err);
+      });
+
+    // Сохранение фото
+    captureButton.addEventListener('click', () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = canvas.toDataURL('image/png');
+      photo.src = imageData;
+
+      // Отправляем фото на сервер
+      fetch('/upload', {
+        method: 'POST',
+        body: JSON.stringify({ image: imageData }),
+        headers: { 'Content-Type': 'application/json' },
+      }).then(response => {
+        if (response.ok) {
+          alert('Фото успешно отправлено!');
+        } else {
+          alert('Ошибка при отправке фото.');
+        }
+      }).catch(err => {
+        console.error('Ошибка отправки:', err);
+      });
+    });
+  </script>
+</body>
+</html>
